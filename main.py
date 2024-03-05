@@ -5,18 +5,7 @@ from tracker import*
 
 model=YOLO('yolov8s.pt')
 
-
-
-def RGB(event, x, y, flags, param):
-    if event == cv2.EVENT_MOUSEMOVE :  
-        colorsBGR = [x, y]
-        print(colorsBGR)
-        
-
-cv2.namedWindow('RGB')
-cv2.setMouseCallback('RGB', RGB)
-
-cap=cv2.VideoCapture('veh2.mp4')
+cap=cv2.VideoCapture(0)
 
 
 my_file = open("coco.txt", "r")
@@ -35,14 +24,12 @@ offset=6
 while True:    
     ret,frame = cap.read()
     if not ret:
+        count = +1
         break
-    count += 1
-    if count % 3 != 0:
-        continue
-    frame=cv2.resize(frame,(1020,500))
+    frame=cv2.resize(frame,(1080,720))
    
 
-    results=model.predict(frame)
+    results=model.predict(frame, agnostic_nms=True)
  #   print(results)
     a=results[0].boxes.data
     px=pd.DataFrame(a).astype("float")
@@ -58,22 +45,22 @@ while True:
         y2=int(row[3])
         d=int(row[5])
         c=class_list[d]
-        if 'car' in c:
-            list.append([x1,y1,x2,y2])
+        list.append([x1,y1,x2,y2])
     bbox_id=tracker.update(list)
     for bbox in bbox_id:
         x3,y3,x4,y4,id=bbox
         cx=int(x3+x4)//2
         cy=int(y3+y4)//2
-        cv2.circle(frame,(cx,cy),4,(0,0,255),-1)
-        cv2.putText(frame,str(id),(cx,cy),cv2.FONT_HERSHEY_COMPLEX,0.8,(0,255,255),2)
+        cv2.rectangle(frame, (x3, y3), (x4 , y4),(249, 34, 108), 2)
+        cv2.rectangle(frame, (x3, y3), (x3+80, y3-30),(249, 34, 108), -1)
+        cv2.putText(frame,format(c)+""+ str(id),(x3,y3-10),cv2.QT_FONT_NORMAL,0.5,(225, 255,225),2)
            
 
 
 #    cv2.line(frame,(274,cy1),(814,cy1),(255,255,255),1)
 #    cv2.line(frame,(177,cy2),(927,cy2),(255,255,255),1)
-    cv2.imshow("RGB", frame)
-    if cv2.waitKey(1)&0xFF==27:
+    cv2.imshow("Frame", frame)
+    if cv2.waitKey(0)==27:
         break
 cap.release()
 cv2.destroyAllWindows()
